@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Brickken API request failed with status 400"
+    }
+  ],
+  "isError": true
+}

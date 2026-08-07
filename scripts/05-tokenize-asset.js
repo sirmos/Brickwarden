@@ -1,34 +1,81 @@
-// This runs the first real on-chain action for Brickwarden.
-// It creates the tokenized asset that the Issuer Agent owns,
-// and that the Warden Agent will later protect.
+// Full Issuer Agent tokenization flow, done directly against the
+// Dapp API rather than through MCP, since we know the exact field
+// names now and this way we see every step clearly.
 
 import "dotenv/config";
-import { openIssuerSession } from "../src/mcpClient.js";
-import { tokenizeAsset } from "../src/issuer.js";
+import { Wallet } from "ethers";
 
-const WALLET_ADDRESS = "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb";
+const BASE_URL = "https://api.sandbox.brickken.com";
+const API_KEY = process.env.BRICKKEN_API_KEY;
+const wallet = new Wallet(process.env.BRICKKEN_PRIVATE_KEY);
 
-async function main() {
-  const client = await openIssuerSession();
-
-  const result = await tokenizeAsset(client, {
-    chainId: "11155111",
-    tokenizerEmail: "sirmos34@yahoo.com",
-    tokenizerAddress: WALLET_ADDRESS,
-    signerAddress: WALLET_ADDRESS,
-    tokenName: "Brickwarden Property",
-    tokenSymbol: "BWP",
-    tokenType: "RWA_TOKEN",
-    supplyCap: "1000000",
-    url: "https://github.com/",
+async function prepare() {
+  const res = await fetch(`${BASE_URL}/prepare-transactions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+    },
+    body: JSON.stringify({
+      chainId: "11155111",
+      method: "newTokenization",
+      tokenizerEmail: "sirmos34@yahoo.com",
+      signerAddress: wallet.address,
+      name: "Brickwarden Property",
+      tokenSymbol: "BWP",
+    }),
   });
 
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error("Prepare failed: " + JSON.stringify(data));
+  }
+  return data;
+}
+
+async function signAll(transactions) {
+  const signed = [];
+  for (const tx of transactions) {
+    const signedTx = await wallet.signTransaction(tx);
+    signed.push(signedTx);
+  }
+  return signed;
+}
+
+async function send(txId, signedTransactions) {
+  const res = await fetch(`${BASE_URL}/send-transactions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+    },
+    body: JSON.stringify({ txId, signedTransactions }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error("Send failed: " + JSON.stringify(data));
+  }
+  return data;
+}
+
+async function main() {
+  console.log("Preparing tokenization transaction...");
+  const prepared = await prepare();
+  console.log("txId:", prepared.txId);
+
+  console.log("Signing", prepared.transactions.length, "transaction(s)...");
+  const signedTransactions = await signAll(prepared.transactions);
+
+  console.log("Sending signed transaction(s)...");
+  const sent = await send(prepared.txId, signedTransactions);
+
   console.log("");
-  console.log("Tokenization result:");
-  console.log(JSON.stringify(result, null, 2));
+  console.log("Sent. Result:");
+  console.log(JSON.stringify(sent, null, 2));
 }
 
 main().catch((err) => {
-  console.error("Tokenization failed:", err.message);
+  console.error("Failed:", err.message);
   process.exit(1);
 });

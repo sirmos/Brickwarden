@@ -35,3 +35,10 @@ This project was built with help from Claude (Anthropic) as a coding assistant, 
 ## Team
 
 Sirmos (solo)
+
+## Progress log
+
+- Tokenized asset created: Brickwarden Property (BWP)
+- Method: newTokenization, via REST (prepare, sign, send)
+- Transaction hash: 0x7f2ad65ffa13bd3d0b2206cb7fbb6531d15429a73b093786750b1f525bdd6bdc
+- Chain: Ethereum Sepolia (11155111)
