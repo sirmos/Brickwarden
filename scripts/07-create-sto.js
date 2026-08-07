@@ -6,16 +6,23 @@ const WALLET_ADDRESS = "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb";
 async function main() {
   const result = await runIssuerAction({
     chainId: "11155111",
-    method: "newTokenization",
+    method: "newSto",
+    tokenSymbol: "BWP",
     tokenizerEmail: "sirmos34@yahoo.com",
     signerAddress: WALLET_ADDRESS,
-    name: "Brickwarden Property",
-    tokenSymbol: "BWP2",
-    supplyCap: "1000000",
+    tokenAmount: "100000",
+    offeringName: "Brickwarden Property Round 1",
+    acceptedCoin: "USDT",
+    startDate: new Date().toISOString(),
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    minRaiseUSD: "1000",
+    maxRaiseUSD: "50000",
+    minInvestment: "100",
+    maxInvestment: "10000",
   });
 
   console.log("");
-  console.log("Tokenization result:");
+  console.log("STO creation result:");
   console.log(JSON.stringify(result, null, 2));
 }
 
