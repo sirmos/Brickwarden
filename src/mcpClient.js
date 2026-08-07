@@ -8,21 +8,38 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 const MCP_URL = "https://mcp.brickken.com/mcp";
 
 // Opens a fresh connection and returns a ready-to-use client.
-// We open a new one per session type since the issuer session (API key)
-// and the warden session (private key) need separate configure calls.
 export async function openBrickkenSession(configPayload) {
   const transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
   const client = new Client({ name: "brickwarden", version: "1.0.0" });
 
   await client.connect(transport);
 
-  // Every session must call configure first, before any other tool works.
   await client.callTool({
     name: "configure",
     arguments: configPayload,
   });
 
   return client;
+}
+
+// Issuer session: needs both the API key (for Dapp API access) and the
+// private key (so it can sign and send transactions on its own).
+export async function openIssuerSession() {
+  return openBrickkenSession({
+    env: process.env.BRICKKEN_ENV || "sandbox",
+    apiKey: process.env.BRICKKEN_API_KEY,
+    privateKey: process.env.BRICKKEN_PRIVATE_KEY,
+  });
+}
+
+// Warden session: only needs the private key, since agentic actions
+// are paid for directly by the wallet through x402.
+export async function openWardenSession() {
+  return openBrickkenSession({
+    env: process.env.BRICKKEN_ENV || "sandbox",
+    privateKey: process.env.BRICKKEN_PRIVATE_KEY,
+    apiKey: "",
+  });
 }
 
 // Small helper so the rest of our code does not repeat the same
