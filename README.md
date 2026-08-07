@@ -42,3 +42,6 @@ Sirmos (solo)
 - Method: newTokenization, via REST (prepare, sign, send)
 - Transaction hash: 0x7f2ad65ffa13bd3d0b2206cb7fbb6531d15429a73b093786750b1f525bdd6bdc
 - Chain: Ethereum Sepolia (11155111)
+- STO created: Brickwarden Property Round 1, offering 100000 BWP2
+- Method: newSto
+- Transaction hash: 0x928c7e0816227113caa14289597a93bff74b81c8d63145bc51806842b7a6af31
