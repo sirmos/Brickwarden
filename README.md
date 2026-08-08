@@ -50,3 +50,10 @@ Sirmos (solo)
 - STO created successfully on BWP: Brickwarden Property Round 1
 - Method: newSto
 - Transaction hash: 0xbc902502307fa03959894172ec712eaefc88e9713ddcddf8bddc8a8ceefee6e2
+- Investor whitelisted on BWP (second attempt, correct investor email)
+- Method: whitelist
+- Transaction hash: 0xc86e965ce9e78fc0302dee141898d75f0501e54f9e167dc0e53c0e16098b5928
+- 500 BWP minted to investor
+- Method: mintToken
+- Transaction hash: 0xc5e08c615792057a71fb705fbe870b9f2dc50caecc44b3ee4129bd390ae3a80b
+- Full Issuer Agent lifecycle complete: tokenize, STO, whitelist, mint
