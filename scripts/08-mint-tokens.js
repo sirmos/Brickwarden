@@ -14,7 +14,7 @@ async function main() {
         investorEmail: "sirmos34@yahoo.com",
         investorAddress: WALLET_ADDRESS,
         amount: "500",
-        needWhitelist: true,
+        needWhitelist: false,
       },
     ],
   });

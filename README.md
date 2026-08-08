@@ -30,6 +30,8 @@ Ethereum Sepolia, chainId 11155111
 
 ## AI tool disclosure
 
+This project was built with Claude (Anthropic) as a development assistant. All testing, transaction execution, and decision-making on the project's direction were done by the developer.
+
 This project was built with help from Claude (Anthropic) as a coding assistant, for writing and debugging code, and researching Brickken's API. All architecture decisions, testing, and running of the code was done by the developer.
 
 ## Team

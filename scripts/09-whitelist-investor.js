@@ -7,7 +7,7 @@ async function main() {
   const result = await runIssuerAction({
     chainId: "11155111",
     method: "whitelist",
-    tokenSymbol: "BWP2",
+    tokenSymbol: "BWP",
     signerAddress: WALLET_ADDRESS,
     userToWhitelist: [
       {
