@@ -48,6 +48,7 @@ async function burnTokens(trigger, amount) {
     method: "burnToken",
     tokenSymbol: "BWP",
     signerAddress: WALLET_ADDRESS,
+    investorEmail: trigger.investorEmail,
     amount: amount,
   });
 

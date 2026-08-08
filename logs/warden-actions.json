@@ -7,5 +7,15 @@
     "investorAddress": "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb",
     "timestamp": "2026-08-08T10:59:04.606Z",
     "txHash": "0x55ba9cdf0796831e049f50d8e94f029d3f44ae60854598d2f653812ede2e972a"
+  },
+  {
+    "action": "burn_tokens",
+    "triggerType": "sanctions_flag",
+    "severity": "high",
+    "reason": "Investor wallet flagged in a sanctions screening check, holdings must be removed immediately.",
+    "investorEmail": "sirmos34@gmail.com",
+    "investorAddress": "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb",
+    "timestamp": "2026-08-08T17:33:12.545Z",
+    "txHash": "0x7c54e351a1815d03c3fba054ec603598244303ae4c64bd33d85a4f3ada41dc48"
   }
 ]
