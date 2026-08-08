@@ -63,3 +63,8 @@ Sirmos (solo)
 - Note: this went through the normal API-key path once the payload was
   complete (name, description, image, services), x402 payment was not
   actually required for this call once fields were correct
+- Warden Agent enforcement demo: detected a mock compliance trigger
+  (KYC expiry) and independently revoked investor whitelist status
+- Method: whitelist (whitelistStatus false)
+- Transaction hash: 0x55ba9cdf0796831e049f50d8e94f029d3f44ae60854598d2f653812ede2e972a
+- Full audit trail logged to logs/warden-actions.json

@@ -1,0 +1,11 @@
+[
+  {
+    "action": "revoke_whitelist",
+    "triggerType": "kyc_expired",
+    "reason": "Investor KYC document expired, compliance review required before continued access.",
+    "investorEmail": "sirmos34@gmail.com",
+    "investorAddress": "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb",
+    "timestamp": "2026-08-08T10:59:04.606Z",
+    "txHash": "0x55ba9cdf0796831e049f50d8e94f029d3f44ae60854598d2f653812ede2e972a"
+  }
+]
