@@ -24,7 +24,16 @@ async function main() {
       chainId: "11155111",
       method: "agentRegister",
       signerAddress: "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb",
-      email: "sirmos34@yahoo.com",
+      email: "sirmos34@gmail.com",
+      name: "Brickwarden Warden Agent",
+      description: "Compliance agent that monitors a tokenized asset and freezes or burns tokens when a risk trigger fires.",
+      image: "https://github.com/sirmos/Brickwarden",
+      services: [
+        {
+          name: "compliance-monitoring",
+          endpoint: "https://github.com/sirmos/Brickwarden",
+        },
+      ],
     }),
   });
 

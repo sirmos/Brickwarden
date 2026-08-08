@@ -57,3 +57,9 @@ Sirmos (solo)
 - Method: mintToken
 - Transaction hash: 0xc5e08c615792057a71fb705fbe870b9f2dc50caecc44b3ee4129bd390ae3a80b
 - Full Issuer Agent lifecycle complete: tokenize, STO, whitelist, mint
+- Warden Agent registered on-chain (ERC-8004 identity)
+- Method: agentRegister
+- Transaction hash: 0x8dad86652161d2f2067b335d0b4397dce22bacf011eb89e7d552efa0b8711a5c
+- Note: this went through the normal API-key path once the payload was
+  complete (name, description, image, services), x402 payment was not
+  actually required for this call once fields were correct
