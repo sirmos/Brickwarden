@@ -4,19 +4,19 @@ import { runIssuerAction } from "../src/brickkenRest.js";
 const WALLET_ADDRESS = "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb";
 
 async function main() {
-  const startsIn5Minutes = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const startsIn20Minutes = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const endsIn30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const result = await runIssuerAction({
     chainId: "11155111",
     method: "newSto",
-    tokenSymbol: "BWP2",
+    tokenSymbol: "BWP",
     tokenizerEmail: "sirmos34@yahoo.com",
     signerAddress: WALLET_ADDRESS,
     tokenAmount: "100000",
     offeringName: "Brickwarden Property Round 1",
     acceptedCoin: "USDT",
-    startDate: startsIn5Minutes,
+    startDate: startsIn20Minutes,
     endDate: endsIn30Days,
     minRaiseUSD: "1000",
     maxRaiseUSD: "50000",

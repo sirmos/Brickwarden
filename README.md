@@ -45,3 +45,6 @@ Sirmos (solo)
 - STO created: Brickwarden Property Round 1, offering 100000 BWP2
 - Method: newSto
 - Transaction hash: 0x928c7e0816227113caa14289597a93bff74b81c8d63145bc51806842b7a6af31
+- STO created successfully on BWP: Brickwarden Property Round 1
+- Method: newSto
+- Transaction hash: 0xbc902502307fa03959894172ec712eaefc88e9713ddcddf8bddc8a8ceefee6e2
