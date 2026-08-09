@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Brickwarden — On-Chain Replay</title>
+<meta name="description" content="Watch an Issuer Agent build a tokenized asset and a Warden Agent enforce compliance on it, replayed from real Ethereum Sepolia transactions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+ --bg:#06080b; --ink:#f8faf9; --muted:#89939d; --line:#27303a; --panel:#0d1217;
+ --issuer:#ff754d; --issuer-soft:#ffb18f; --warden:#36d6ae; --warden-soft:#9af3df;
+ --high:#ff3f55; --medium:#ffbd4a; --low:#72a9ff;
+ --accent:var(--issuer); --accent-soft:var(--issuer-soft);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"DM Sans",sans-serif}
+body{
+ overflow-x:hidden;
+ background:
+  radial-gradient(900px 500px at 5% 0%,rgba(255,117,77,.13),transparent 65%),
+  radial-gradient(850px 500px at 100% 25%,rgba(54,214,174,.10),transparent 64%),
+  #06080b;
+}
+body:before{
+ content:"";position:fixed;inset:0;pointer-events:none;opacity:.17;
+ background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+ background-size:50px 50px;
+ mask-image:linear-gradient(to bottom,#000,transparent 92%);
+}
+.wrap{width:min(1180px,calc(100% - 38px));margin:auto}
+header{padding:34px 0 25px;display:flex;justify-content:space-between;align-items:center;gap:25px}
+.brand{display:flex;align-items:center;gap:15px}
+.logo{
+ width:54px;height:54px;display:grid;place-items:center;border-radius:15px;
+ background:linear-gradient(145deg,#171d23,#090c10);border:1px solid #313a44;
+ box-shadow:0 12px 35px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.08);
+}
+/* Brickwarden mark: a shield + brick/check motif, rather than a polygon */
+.logo svg{width:35px;height:35px}
+.eyebrow{font:500 10px "IBM Plex Mono";letter-spacing:.16em;text-transform:uppercase;color:#78838d;margin-bottom:5px}
+h1{font:700 42px/.9 "Space Grotesk";letter-spacing:-.055em;margin:0}
+.sub{margin:10px 0 0;color:#929da6;font-size:13px;line-height:1.5}
+.network{font:500 10px "IBM Plex Mono";letter-spacing:.08em;color:#a7b0b7;border:1px solid #29323b;border-radius:999px;padding:10px 13px;background:#0c1116;white-space:nowrap}
+.network i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--warden);box-shadow:0 0 12px var(--warden);margin-right:7px}
+.progress{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin:0 0 25px}
+.progress button{height:6px;border:0;padding:0;border-radius:9px;background:#202831;cursor:pointer;overflow:hidden}
+.progress button .fill{display:block;width:0;height:100%;border-radius:inherit;background:var(--accent)}
+.progress button.done .fill{width:100%;background:#56616b}
+.progress button.active .fill{width:var(--pct,0%);background:var(--accent)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px}
+.card{
+ --accent:var(--issuer);--accent-soft:var(--issuer-soft);
+ min-height:560px;position:relative;overflow:hidden;border-radius:26px;
+ border:1px solid color-mix(in srgb,var(--accent) 30%,#27303a);
+ background:
+  radial-gradient(650px 360px at 92% 0%,color-mix(in srgb,var(--accent) 17%,transparent),transparent 68%),
+  linear-gradient(145deg,#11171d,#090d11);
+ box-shadow:0 28px 90px rgba(0,0,0,.48);
+ padding:38px 40px;
+ transition:border-color .35s,background .35s;
+}
+.card:after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);box-shadow:0 0 28px color-mix(in srgb,var(--accent) 55%,transparent)}
+.top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;margin-bottom:52px}
+.agent{display:flex;align-items:center;gap:11px;color:var(--accent-soft);font:600 10px "IBM Plex Mono";letter-spacing:.13em;text-transform:uppercase}
+.agentmark{
+ width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+ color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 55%,#27303a);
+ background:color-mix(in srgb,var(--accent) 9%,#0d1217);
+ font:700 16px "Space Grotesk";
+ box-shadow:0 0 22px color-mix(in srgb,var(--accent) 12%,transparent);
+}
+.stepnum{font:500 10px "IBM Plex Mono";letter-spacing:.1em;color:#68737d}
+h2{position:relative;z-index:1;margin:0 0 18px;max-width:780px;font:600 clamp(40px,6vw,68px)/.94 "Space Grotesk";letter-spacing:-.06em}
+.desc{position:relative;z-index:1;max-width:690px;margin:0 0 34px;color:#b9c2c8;font-size:16px;line-height:1.7}
+.event{position:relative;z-index:1;display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:25px;min-height:30px}
+.badge{font:600 9px "IBM Plex Mono";letter-spacing:.1em;text-transform:uppercase;padding:7px 10px;border-radius:999px;border:1px solid currentColor}
+.action{font:500 10px "IBM Plex Mono";letter-spacing:.05em;color:#aeb8bf;background:#151c23;border:1px solid #2a343d;padding:7px 10px;border-radius:999px}
+.tx{position:relative;z-index:1;border:1px solid #29333d;background:#080c10;border-radius:15px;padding:16px}
+.txlabel{font:500 9px "IBM Plex Mono";letter-spacing:.13em;text-transform:uppercase;color:#65717b;margin-bottom:9px}
+.txrow{display:flex;align-items:center;gap:10px}
+.hash{font:500 12px "IBM Plex Mono";color:#e1e5e7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.iconbtn{width:34px;height:34px;flex:none;border-radius:9px;background:#121920;border:1px solid #303a44;color:#aeb8bf;cursor:pointer}
+.iconbtn:hover{color:white;border-color:#596570}
+.eth{position:relative;z-index:1;display:inline-flex;align-items:center;gap:7px;margin-top:13px;text-decoration:none;color:var(--accent-soft);font:500 11px "IBM Plex Mono"}
+.eth:hover{color:white}
+
+.side{display:flex;flex-direction:column;gap:18px}
+.panel{border:1px solid #252f38;background:#0c1116;border-radius:20px;padding:21px}
+.panel h3{font:600 13px "Space Grotesk";margin:0 0 17px}
+.timeline{display:flex;flex-direction:column;gap:2px}
+.tline{position:relative;display:flex;gap:12px;align-items:flex-start;padding:9px 7px;border-radius:10px;color:#69757f;font-size:11px;line-height:1.35;cursor:pointer;transition:.2s}
+.tline:hover{background:#12181e;color:#aeb7bd}
+.tline.active{background:color-mix(in srgb,var(--accent) 9%,transparent);color:#eef1f1}
+.dot{width:7px;height:7px;flex:none;margin-top:4px;border-radius:50%;background:#39434d}
+.tline.active .dot{background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.role{display:grid;gap:9px}
+.rolecard{border:1px solid #252e37;border-radius:13px;padding:13px;background:#10161c}
+.rolecard .rhead{display:flex;align-items:center;gap:8px;font:600 10px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.08em}
+.rolecard .rline{width:7px;height:7px;border-radius:50%;background:var(--rcolor)}
+.rolecard p{font-size:11px;color:#76818b;margin:7px 0 0;line-height:1.45}
+.chain{margin-top:16px;padding-top:16px;border-top:1px solid #242d35;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chain div{background:#11171d;border:1px solid #242d35;border-radius:10px;padding:10px}
+.chain b{display:block;font:500 8px "IBM Plex Mono";text-transform:uppercase;color:#626d77;margin-bottom:5px}
+.chain span{font:500 12px "Space Grotesk";color:#d3d9dd}
+
+.controls{display:flex;justify-content:center;gap:12px;align-items:center;padding:20px 0 0}
+.ctrl{width:44px;height:44px;border-radius:50%;background:#10161c;border:1px solid #2b353e;color:#b6c0c7;font-size:17px;cursor:pointer}
+.ctrl:hover{border-color:#596570;color:white}
+.ctrl.play{width:53px;height:53px;background:var(--warden);border-color:var(--warden);color:#06110e;font-weight:700;box-shadow:0 0 28px rgba(54,214,174,.16)}
+.counter{font:500 10px "IBM Plex Mono";letter-spacing:.1em;text-align:center;color:#69747e;margin-top:10px}
+footer{padding:26px 0 34px;text-align:center;font:500 10px "IBM Plex Mono";color:#606b75}
+footer a{color:#8e99a2;text-decoration:none}
+
+@media(max-width:900px){
+ .layout{grid-template-columns:1fr} .side{display:grid;grid-template-columns:1fr 1fr}
+}
+@media(max-width:620px){
+ .wrap{width:calc(100% - 22px)} header{align-items:flex-start;flex-direction:column;padding-top:23px}
+ .network{align-self:flex-start} h1{font-size:36px} .card{padding:28px 25px;min-height:0;border-radius:20px}
+ .top{margin-bottom:40px} h2{font-size:43px} .side{display:flex}
+ .progress{gap:3px} .hash{font-size:10px}
+}
+.ctrl:focus-visible,.iconbtn:focus-visible,.progress button:focus-visible,.tline:focus-visible,.eth:focus-visible{
+ outline:2px solid var(--warden-soft);outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div class="brand">
+  <div class="logo" aria-label="Brickwarden logo">
+   <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <!-- A simple brick wall forming a protective shield: asset + warden -->
+    <path d="M8 11h32v17.5c0 8.5-6.8 14.4-16 18-9.2-3.6-16-9.5-16-18V11Z"
+          fill="#ff754d"/>
+    <path d="M8 18h32M8 25h32M19 11v7M30 11v7M14 18v7M25 18v7M36 18v7M19 25v7M30 25v7"
+          stroke="#080a0d" stroke-width="2" stroke-linecap="square"/>
+    <path d="m20 32 3.7 3.7L31 28.4"
+          stroke="#36d6ae" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+   </svg>
+  </div>
+  <div>
+   <div class="eyebrow">On-Chain Replay</div>
+   <h1>Brickwarden</h1>
+   <div class="sub">Two agents. One tokenized asset. Every step is replayed from real on-chain activity.</div>
+  </div>
+ </div>
+ <div class="network"><i></i>ETHEREUM SEPOLIA · 11155111</div>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<div class="layout">
+ <main>
+  <article class="card" id="card"></article>
+  <div class="controls">
+   <button class="ctrl" id="prev" aria-label="Previous step">←</button>
+   <button class="ctrl play" id="playpause" aria-label="Play or pause">Ⅱ</button>
+   <button class="ctrl" id="next" aria-label="Next step">→</button>
+  </div>
+  <div class="counter" id="counter"></div>
+ </main>
+
+ <aside class="side">
+  <section class="panel">
+   <h3>Replay map</h3>
+   <div class="timeline" id="timeline"></div>
+  </section>
+  <section class="panel">
+   <h3>What the agents do</h3>
+   <div class="role">
+    <div class="rolecard" style="--rcolor:var(--issuer)">
+     <div class="rhead"><i class="rline"></i> Issuer Agent</div>
+     <p>Creates the asset, opens the offering, clears the investor and mints BWP.</p>
+    </div>
+    <div class="rolecard" style="--rcolor:var(--warden)">
+     <div class="rhead"><i class="rline"></i> Warden Agent</div>
+     <p>Monitors compliance and independently enforces the required response.</p>
+    </div>
+   </div>
+   <div class="chain">
+    <div><b>Network</b><span>Sepolia</span></div>
+    <div><b>Steps</b><span>8 transactions</span></div>
+   </div>
+  </section>
+ </aside>
+</div>
+
+<footer><a href="https://github.com/sirmos/Brickwarden" target="_blank" rel="noopener">github.com/sirmos/Brickwarden</a></footer>
+</div>
+
+<script>
+const STEPS = [
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Tokenize BWP",
+    desc: "The Issuer Agent creates the BWP asset on Ethereum Sepolia through Brickken's Dapp API.",
+    tx: "0x7f2ad65ffa13bd3d0b2206cb7fbb6531d15429a73b093786750b1f525bdd6bdc"
+  },
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Launch the offering",
+    desc: "Brickwarden Property Round 1 opens on BWP, with a hard cap of 50,000 tokens.",
+    tx: "0xbc902502307fa03959894172ec712eaefc88e9713ddcddf8bddc8a8ceefee6e2"
+  },
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Whitelist the investor",
+    desc: "The investor wallet clears compliance and is cleared to hold BWP.",
+    tx: "0xc86e965ce9e78fc0302dee141898d75f0501e54f9e167dc0e53c0e16098b5928"
+  },
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Mint 500 BWP",
+    desc: "500 tokens mint straight to the investor. The Issuer Agent's lifecycle is now live on chain.",
+    tx: "0xc5e08c615792057a71fb705fbe870b9f2dc50caecc44b3ee4129bd390ae3a80b"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Warden comes online",
+    desc: "A second, independent agent registers its own on-chain identity under ERC-8004, separate from the Issuer.",
+    tx: "0x8dad86652161d2f2067b335d0b4397dce22bacf011eb89e7d552efa0b8711a5c"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Trigger: KYC expired",
+    severity: "medium",
+    action: "Revoke whitelist",
+    desc: "Warden detects the investor's KYC has expired and revokes access on its own, no input from the Issuer.",
+    tx: "0x55ba9cdf0796831e049f50d8e94f029d3f44ae60854598d2f653812ede2e972a"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Trigger: Sanctions flag",
+    severity: "high",
+    action: "Burn tokens",
+    desc: "A higher severity event calls for a stronger response. Warden burns the investor's holdings instead of only revoking access.",
+    tx: "0x7c54e351a1815d03c3fba054ec603598244303ae4c64bd33d85a4f3ada41dc48"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Trigger: Jurisdiction change",
+    severity: "low",
+    action: "Revoke whitelist",
+    desc: "The investor's declared jurisdiction falls outside where the offering is registered. Warden revokes access again.",
+    tx: "0xbe937ee515a9021d7fcfdee06f4098d09fb7aab6773b0b29dbda84d559e1aba0"
+  }
+];
+const STEP_MS=4200;
+let current=0,playing=true,startTime=null,elapsed=0,rafId=null;
+const cardEl=document.getElementById("card"),progressEl=document.getElementById("progress"),
+counterEl=document.getElementById("counter"),playBtn=document.getElementById("playpause"),
+timelineEl=document.getElementById("timeline");
+
+function getColors(s){
+ if(s.severity==="high") return ["var(--high)","var(--high)"];
+ if(s.severity==="medium") return ["var(--medium)","var(--medium)"];
+ if(s.severity==="low") return ["var(--low)","var(--low)"];
+ if(s.agent==="warden") return ["var(--warden)","var(--warden-soft)"];
+ return ["var(--issuer)","var(--issuer-soft)"];
+}
+function seal(s){return s.severity==="high"?"!":s.agent==="warden"?"W":"I"}
+
+function render(){
+ const s=STEPS[current], [accent,soft]=getColors(s);
+ cardEl.style.setProperty("--accent",accent);
+ cardEl.style.setProperty("--accent-soft",soft);
+ cardEl.innerHTML=`
+  <div class="top">
+   <div class="agent"><span class="agentmark">${seal(s)}</span>${s.tag}</div>
+   <div class="stepnum">STEP ${String(current+1).padStart(2,"0")} / 08</div>
+  </div>
+  <h2>${s.title}</h2>
+  <div class="event">
+   ${s.severity?`<span class="badge" style="color:${accent}">${s.severity} severity</span>`:""}
+   ${s.action?`<span class="action">${s.action}</span>`:""}
+  </div>
+  <p class="desc">${s.desc}</p>
+  <div class="tx">
+   <div class="txlabel">Transaction hash</div>
+   <div class="txrow">
+    <div class="hash">${s.tx}</div>
+    <button class="iconbtn" id="copyBtn" aria-label="Copy transaction hash">⧉</button>
+   </div>
+  </div>
+  <a class="eth" href="https://sepolia.etherscan.io/tx/${s.tx}" target="_blank" rel="noopener">↗ View on Etherscan</a>`;
+ counterEl.textContent=`${current+1} / ${STEPS.length}`;
+ document.getElementById("copyBtn").onclick=()=>navigator.clipboard.writeText(s.tx);
+ renderProgress();renderTimeline();
+}
+function renderProgress(){
+ progressEl.innerHTML="";
+ STEPS.forEach((s,i)=>{
+  const b=document.createElement("button");
+  b.className=i<current?"done":i===current?"active":"";
+  b.innerHTML='<span class="fill"></span>';
+  b.setAttribute("aria-label",`Go to step ${i+1}: ${s.title}`);
+  b.onclick=()=>goTo(i);progressEl.appendChild(b);
+ });
+}
+function renderTimeline(){
+ timelineEl.innerHTML="";
+ STEPS.forEach((s,i)=>{
+  const d=document.createElement("div");
+  d.className="tline"+(i===current?" active":"");
+  d.setAttribute("tabindex","0");
+  d.setAttribute("role","button");
+  d.setAttribute("aria-label",`Go to step ${i+1}: ${s.title}`);
+  d.innerHTML=`<span class="dot"></span><span>${i+1}. ${s.title}</span>`;
+  d.onclick=()=>goTo(i);
+  d.onkeydown=(e)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();goTo(i)}};
+  timelineEl.appendChild(d);
+ });
+}
+function updateFill(){
+ const b=progressEl.children[current];if(!b)return;
+ b.querySelector(".fill").style.width=Math.min(100,elapsed/STEP_MS*100)+"%";
+}
+function tick(ts){
+ if(!playing)return;
+ if(startTime===null)startTime=ts-elapsed;
+ elapsed=ts-startTime;updateFill();
+ if(elapsed>=STEP_MS){next();return}
+ rafId=requestAnimationFrame(tick);
+}
+function goTo(i){
+ current=((i%STEPS.length)+STEPS.length)%STEPS.length;
+ elapsed=0;startTime=null;render();
+ if(playing)rafId=requestAnimationFrame(tick);
+}
+function next(){goTo(current+1)} function prev(){goTo(current-1)}
+function setPlaying(v){
+ playing=v;playBtn.textContent=playing?"Ⅱ":"▶";
+ playBtn.setAttribute("aria-label",playing?"Pause":"Play");
+ if(playing){startTime=null;rafId=requestAnimationFrame(tick)}else cancelAnimationFrame(rafId);
+}
+document.getElementById("next").onclick=()=>{setPlaying(false);next()};
+document.getElementById("prev").onclick=()=>{setPlaying(false);prev()};
+playBtn.onclick=()=>setPlaying(!playing);
+document.addEventListener("keydown",e=>{
+ if(e.key==="ArrowRight"){setPlaying(false);next()}
+ if(e.key==="ArrowLeft"){setPlaying(false);prev()}
+ if(e.key===" "){e.preventDefault();setPlaying(!playing)}
+});
+render();setPlaying(true);
+</script>
+</body>
+</html>
