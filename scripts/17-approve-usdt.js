@@ -12,7 +12,6 @@ async function main() {
     tokenSymbol: "USDT",
     spenderAddress: ESCROW,
     amount: "100",
-    tokenizerAddress: WALLET_ADDRESS,
   });
 
   console.log("");
