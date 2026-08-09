@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Brickwarden — Live Ledger Replay</title>
+<meta name="description" content="Watch an Issuer Agent build a tokenized asset and a Warden Agent enforce compliance on it, replayed from real Ethereum Sepolia transactions." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14161A;
+    --surface: #1B1F26;
+    --surface-2: #20242C;
+    --line: #2C313B;
+    --brick: #9A4A32;
+    --brick-soft: #C77A5C;
+    --verdigris: #4C7A6E;
+    --verdigris-soft: #7FA89D;
+    --ember: #E2542B;
+    --parchment: #EAE3D3;
+    --muted: #8B8F98;
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(234,227,211,0.02) 39px, rgba(234,227,211,0.02) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(234,227,211,0.015) 79px, rgba(234,227,211,0.015) 80px);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 20px 20px 8px;
+    text-align: center;
+  }
+
+  header .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(28px, 6vw, 40px);
+    margin: 4px 0 2px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 4px;
+    max-width: 480px;
+    margin-inline: auto;
+  }
+
+  .progress {
+    display: flex;
+    gap: 4px;
+    padding: 16px 20px 0;
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .progress button {
+    flex: 1;
+    height: 4px;
+    border: none;
+    background: var(--line);
+    border-radius: 2px;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress button .fill {
+    position: absolute;
+    inset: 0;
+    background: var(--parchment);
+    width: 0%;
+    transform-origin: left;
+  }
+
+  .progress button.done .fill { width: 100%; background: var(--muted); }
+  .progress button.active .fill { width: var(--pct, 0%); background: var(--parchment); }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px 8px;
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 560px;
+    position: relative;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px 28px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--tag-color, var(--brick));
+  }
+
+  .seal {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid var(--tag-color, var(--brick));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--tag-color, var(--brick));
+    margin-bottom: 18px;
+    animation: stamp 420ms cubic-bezier(.2,1.4,.4,1);
+  }
+
+  @keyframes stamp {
+    0% { transform: scale(2.2) rotate(-8deg); opacity: 0; }
+    60% { transform: scale(0.94) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tag-color, var(--brick));
+    margin-bottom: 8px;
+  }
+
+  .card h2 {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 5vw, 28px);
+    margin: 0 0 10px;
+    line-height: 1.15;
+  }
+
+  .card p.desc {
+    color: #C7C2B6;
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0 0 20px;
+  }
+
+  .severity {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    border: 1px solid currentColor;
+  }
+  .severity.high { color: var(--ember); }
+  .severity.medium { color: var(--verdigris-soft); }
+  .severity.low { color: var(--muted); }
+
+  .txbox {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .txbox .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .txbox .hash-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .txbox .hash {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--parchment);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .iconbtn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+  .iconbtn:hover { color: var(--parchment); border-color: var(--muted); }
+
+  .etherscan {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    color: var(--verdigris-soft);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
+  .etherscan:hover { color: var(--parchment); }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 18px 0 6px;
+  }
+
+  .ctrl {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--parchment);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .ctrl:hover { border-color: var(--muted); }
+  .ctrl:focus-visible, .iconbtn:focus-visible, .progress button:focus-visible {
+    outline: 2px solid var(--verdigris-soft);
+    outline-offset: 2px;
+  }
+
+  .ctrl.play { width: 50px; height: 50px; background: var(--verdigris); border-color: var(--verdigris); }
+
+  .counter {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding-bottom: 22px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 10px 20px 26px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seal { animation: none; }
+    .progress button .fill { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Ethereum Sepolia · Chain ID 11155111</div>
+  <h1>Brickwarden</h1>
+  <p>Two agents, one tokenized asset. Every step below is a real transaction, replayed in order.</p>
+</header>
+
+<div class="progress" id="progress"></div>
+
+<main>
+  <div class="stage">
+    <div class="card" id="card"></div>
+    <div class="controls">
+      <button class="ctrl" id="prev" aria-label="Previous step">&#8592;</button>
+      <button class="ctrl play" id="playpause" aria-label="Play or pause">&#9654;</button>
+      <button class="ctrl" id="next" aria-label="Next step">&#8594;</button>
+    </div>
+    <div class="counter" id="counter"></div>
+  </div>
+</main>
+
+<footer>
+  <a href="https://github.com/sirmos/Brickwarden" target="_blank" rel="noopener">github.com/sirmos/Brickwarden</a>
+</footer>
+
+<script>
+const STEPS = [
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Tokenize BWP",
+    desc: "The Issuer Agent creates the BWP asset on Ethereum Sepolia through Brickken's Dapp API.",
+    tx: "0x7f2ad65ffa13bd3d0b2206cb7fbb6531d15429a73b093786750b1f525bdd6bdc"
+  },
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Launch the offering",
+    desc: "Brickwarden Property Round 1 opens on BWP, with a hard cap of 50,000 tokens.",
+    tx: "0xbc902502307fa03959894172ec712eaefc88e9713ddcddf8bddc8a8ceefee6e2"
+  },
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Whitelist the investor",
+    desc: "The investor wallet clears compliance and is cleared to hold BWP.",
+    tx: "0xc86e965ce9e78fc0302dee141898d75f0501e54f9e167dc0e53c0e16098b5928"
+  },
+  {
+    agent: "issuer",
+    tag: "Issuer Agent",
+    title: "Mint 500 BWP",
+    desc: "500 tokens mint straight to the investor. The Issuer Agent's lifecycle is now live on chain.",
+    tx: "0xc5e08c615792057a71fb705fbe870b9f2dc50caecc44b3ee4129bd390ae3a80b"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Warden comes online",
+    desc: "A second, independent agent registers its own on-chain identity under ERC-8004, separate from the Issuer.",
+    tx: "0x8dad86652161d2f2067b335d0b4397dce22bacf011eb89e7d552efa0b8711a5c"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Trigger: KYC expired",
+    severity: "medium",
+    action: "Revoke whitelist",
+    desc: "Warden detects the investor's KYC has expired and revokes access on its own, no input from the Issuer.",
+    tx: "0x55ba9cdf0796831e049f50d8e94f029d3f44ae60854598d2f653812ede2e972a"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Trigger: Sanctions flag",
+    severity: "high",
+    action: "Burn tokens",
+    desc: "A higher severity event calls for a stronger response. Warden burns the investor's holdings instead of only revoking access.",
+    tx: "0x7c54e351a1815d03c3fba054ec603598244303ae4c64bd33d85a4f3ada41dc48"
+  },
+  {
+    agent: "warden",
+    tag: "Warden Agent",
+    title: "Trigger: Jurisdiction change",
+    severity: "low",
+    action: "Revoke whitelist",
+    desc: "The investor's declared jurisdiction falls outside where the offering is registered. Warden revokes access again.",
+    tx: "0xbe937ee515a9021d7fcfdee06f4098d09fb7aab6773b0b29dbda84d559e1aba0"
+  }
+];
+
+const STEP_MS = 4200;
+let current = 0;
+let playing = true;
+let startTime = null;
+let elapsed = 0;
+let rafId = null;
+
+const cardEl = document.getElementById("card");
+const progressEl = document.getElementById("progress");
+const counterEl = document.getElementById("counter");
+const playBtn = document.getElementById("playpause");
+
+function color(agent, severity) {
+  if (severity === "high") return "var(--ember)";
+  if (agent === "warden") return "var(--verdigris)";
+  return "var(--brick)";
+}
+
+function seal(agent, severity) {
+  if (severity === "high") return "!";
+  return agent === "warden" ? "W" : "I";
+}
+
+function render() {
+  const s = STEPS[current];
+  const c = color(s.agent, s.severity);
+  cardEl.style.setProperty("--tag-color", c);
+  cardEl.innerHTML = `
+    <div class="seal">${seal(s.agent, s.severity)}</div>
+    <div class="tag">${s.tag}${s.action ? " · " + s.action : ""}</div>
+    <h2>${s.title}</h2>
+    ${s.severity ? `<div class="severity ${s.severity}">${s.severity} severity</div>` : ""}
+    <p class="desc">${s.desc}</p>
+    <div class="txbox">
+      <div class="label">Transaction hash</div>
+      <div class="hash-row">
+        <div class="hash">${s.tx}</div>
+        <button class="iconbtn" id="copyBtn" aria-label="Copy transaction hash">&#10063;</button>
+      </div>
+    </div>
+    <a class="etherscan" href="https://sepolia.etherscan.io/tx/${s.tx}" target="_blank" rel="noopener">View on Etherscan &#8594;</a>
+  `;
+  counterEl.textContent = `${current + 1} / ${STEPS.length}`;
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    navigator.clipboard.writeText(s.tx);
+  });
+  renderProgress();
+}
+
+function renderProgress() {
+  progressEl.innerHTML = "";
+  STEPS.forEach((s, i) => {
+    const btn = document.createElement("button");
+    btn.className = i < current ? "done" : i === current ? "active" : "";
+    btn.innerHTML = `<span class="fill"></span>`;
+    btn.setAttribute("aria-label", `Go to step ${i + 1}: ${s.title}`);
+    btn.addEventListener("click", () => goTo(i));
+    progressEl.appendChild(btn);
+  });
+}
+
+function updateFill() {
+  const activeBtn = progressEl.children[current];
+  if (!activeBtn) return;
+  const fill = activeBtn.querySelector(".fill");
+  const pct = Math.min(100, (elapsed / STEP_MS) * 100);
+  fill.style.width = pct + "%";
+}
+
+function tick(ts) {
+  if (!playing) return;
+  if (startTime === null) startTime = ts - elapsed;
+  elapsed = ts - startTime;
+  updateFill();
+  if (elapsed >= STEP_MS) {
+    next(true);
+    return;
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function goTo(i) {
+  current = ((i % STEPS.length) + STEPS.length) % STEPS.length;
+  elapsed = 0;
+  startTime = null;
+  render();
+  if (playing) rafId = requestAnimationFrame(tick);
+}
+
+function next(auto) { goTo(current + 1); }
+function prev() { goTo(current - 1); }
+
+function setPlaying(v) {
+  playing = v;
+  playBtn.innerHTML = playing ? "&#10074;&#10074;" : "&#9654;";
+  if (playing) {
+    startTime = null;
+    rafId = requestAnimationFrame(tick);
+  } else {
+    cancelAnimationFrame(rafId);
+  }
+}
+
+document.getElementById("next").addEventListener("click", () => { setPlaying(false); next(); });
+document.getElementById("prev").addEventListener("click", () => { setPlaying(false); prev(); });
+playBtn.addEventListener("click", () => setPlaying(!playing));
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") { setPlaying(false); next(); }
+  if (e.key === "ArrowLeft") { setPlaying(false); prev(); }
+  if (e.key === " ") { e.preventDefault(); setPlaying(!playing); }
+});
+
+render();
+setPlaying(true);
+</script>
+
+</body>
+</html>
