@@ -15,6 +15,6 @@ developers or Brickken's own team.
 3. mintToken: even with the correct field name, requests to mint
    BWP2 (a token we successfully created and ran an STO for on the
    same account) fail with "No company found with this token
-   symbol". Reported to Brickken support, response pending.
+   symbol". Was reported to Brickken Support and a different email address was used to fix it.
 
 5. dividendDistribution checks a USDT allowance from the signer wallet to the BWP STO token contract. Not the escrow contract, and not USDC or EURC. Get the correct spender address from GET /get-tokenizer-info?tokenSymbol=BWP, field tokenAddress. Confirmed with Brickken support and fixed.
