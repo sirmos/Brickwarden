@@ -23,6 +23,7 @@ Try it live: https://sirmos.github.io/Brickwarden/ (replays every confirmed tran
 - mintToken
 - agentRegister
 - burnToken
+- dividendDistribution
 
 ## Network
 
@@ -47,13 +48,13 @@ Ethereum Sepolia, chainId 11155111
 
 **Warden Agent**
 
-5. Register on-chain identity, ERC-8004 (agentRegister)
+6. Register on-chain identity, ERC-8004 (agentRegister)
    `0x8dad86652161d2f2067b335d0b4397dce22bacf011eb89e7d552efa0b8711a5c`
-6. Trigger: KYC expired, medium severity, revoke whitelist (whitelist)
+7. Trigger: KYC expired, medium severity, revoke whitelist (whitelist)
    `0x55ba9cdf0796831e049f50d8e94f029d3f44ae60854598d2f653812ede2e972a`
-7. Trigger: sanctions flag, high severity, burn tokens (burnToken)
+8. Trigger: sanctions flag, high severity, burn tokens (burnToken)
    `0x7c54e351a1815d03c3fba054ec603598244303ae4c64bd33d85a4f3ada41dc48`
-8. Trigger: jurisdiction change, low severity, revoke whitelist (whitelist)
+9. Trigger: jurisdiction change, low severity, revoke whitelist (whitelist)
    `0xbe937ee515a9021d7fcfdee06f4098d09fb7aab6773b0b29dbda84d559e1aba0`
 
 **Note on one earlier attempt**: an early newSto call reverted on chain because its start date was already in the past by the time the transaction was mined (`0x928c7e0816227113caa14289597a93bff74b81c8d63145bc51806842b7a6af31`, status 0, confirmed with Brickken support). It is listed here for transparency. It is not counted as a working step. Transaction 2 above is the corrected call that succeeded.
