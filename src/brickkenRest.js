@@ -21,11 +21,15 @@ export async function runIssuerAction(payload) {
     throw new Error("Prepare failed: " + JSON.stringify(prepared));
   }
 
+  const txList = Array.isArray(prepared.transactions)
+    ? prepared.transactions
+    : [prepared.transactions];
+
   console.log("txId:", prepared.txId);
-  console.log(`Signing ${prepared.transactions.length} transaction(s)...`);
+  console.log(`Signing ${txList.length} transaction(s)...`);
 
   const signedTransactions = [];
-  for (const tx of prepared.transactions) {
+  for (const tx of txList) {
     signedTransactions.push(await wallet.signTransaction(tx));
   }
 

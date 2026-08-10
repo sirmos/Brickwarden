@@ -27,5 +27,15 @@
     "investorAddress": "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb",
     "timestamp": "2026-08-09T03:01:49.158Z",
     "txHash": "0xbe937ee515a9021d7fcfdee06f4098d09fb7aab6773b0b29dbda84d559e1aba0"
+  },
+  {
+    "action": "revoke_whitelist",
+    "triggerType": "kyc_expired",
+    "severity": "medium",
+    "reason": "Investor KYC document expired, compliance review required before continued access.",
+    "investorEmail": "sirmos34@gmail.com",
+    "investorAddress": "0x7FDc636B74Bb6AB9453a29de6d2Bd78Ead568bdb",
+    "timestamp": "2026-08-10T19:24:07.137Z",
+    "txHash": "0x93c5d9002cc903a908e17180952904a6992f0db40516720f0f9a4f08da183653"
   }
 ]
